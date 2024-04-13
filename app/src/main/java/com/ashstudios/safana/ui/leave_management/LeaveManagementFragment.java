@@ -27,7 +27,7 @@ public class LeaveManagementFragment extends Fragment {
     static private LeaveManagementViewModel leaveManagementViewModel;
     static RecyclerView recyclerView;
     private Boolean isUndo = false;
-    private LeaveManagementRVAdapter leaveManagementRVAdapter;
+    static private LeaveManagementRVAdapter leaveManagementRVAdapter;
     private ConstraintLayout constraintLayout;
     public String data;
 
@@ -87,10 +87,14 @@ public class LeaveManagementFragment extends Fragment {
         itemTouchhelper.attachToRecyclerView(recyclerView);
     }
 
-    public static void sort(Context mContext, Bundle b) {
-        Toast.makeText(mContext, "sorting...", Toast.LENGTH_LONG).show();
-        leaveManagementViewModel.sort(b);
-        LeaveManagementRVAdapter leaveManagementRVAdapter = new LeaveManagementRVAdapter(leaveManagementViewModel, mContext);
-        recyclerView.setAdapter(leaveManagementRVAdapter);
+    public static void sort(Context mContext, Bundle b, boolean nameChip, boolean dateChip) {
+        Toast.makeText( mContext, "sorting...", Toast.LENGTH_LONG).show();
+        if(dateChip){
+            leaveManagementViewModel.sort(b);
+        }
+        if(nameChip){
+            leaveManagementViewModel.sort_name(b);
+        }
+        leaveManagementRVAdapter.notifyDataSetChanged();
     }
 }

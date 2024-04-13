@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.res.ResourcesCompat;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -197,7 +198,7 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         int sum  =0;
         if(taskStatusList==null || taskStatusList.isEmpty()){
             percent = 0;
-            n = 4;
+            n = 0;
         }else{
             for (int i : taskStatusList){
                 sum+=i;
@@ -208,7 +209,14 @@ public class ProjectDetailsActivity extends AppCompatActivity {
 
         progressBar.setProgress(percent);
         TextView text = findViewById(R.id.progress_bar_text);
+        TextView p_status = findViewById(R.id.tv_status);
         text.setText(String.valueOf(percent) + "%");
+
+        if(percent < 100){
+            p_status.setText("IN PROGRESS");
+        }else{
+            p_status.setText("DONE");
+        }
         LineChartView lineChartView = findViewById(R.id.chart);
         pieLineChartView = findViewById(R.id.pie_chart);
         pieCharData(taskStatusList);
@@ -248,51 +256,38 @@ public class ProjectDetailsActivity extends AppCompatActivity {
             values.add(sliceValue);
         }
 
-        // Add missing values if necessary
-        for (int i = numValues; i < 4; i++) {
-            SliceValue sliceValue = new SliceValue(0, ChartUtils.pickColor());
-            values.add(sliceValue);
-        }
-
-
-        //pie chart
         PieChartData data = new PieChartData(values);
         boolean hasLabels = true;
         data.setHasLabels(hasLabels);
         boolean hasLabelForSelected = false;
         data.setHasLabelsOnlyForSelected(hasLabelForSelected);
-        boolean hasLabelsOutside = false;
-        data.setHasLabelsOutside(hasLabelsOutside);
-        boolean hasCenterCircle = false;
+        boolean hasCenterCircle = true;
         data.setHasCenterCircle(hasCenterCircle);
+
 
         boolean isExploded = true;
         if (isExploded) {
-            data.setSlicesSpacing(24);
+            data.setSlicesSpacing(5);
         }
 
-        boolean hasCenterText1 = false;
-        if (hasCenterText1) {
-            data.setCenterText1("Hello!");
-
-            // Get roboto-italic font.
-            Typeface tf = Typeface.createFromAsset(ProjectDetailsActivity.this.getAssets(), "Roboto-Italic.ttf");
+        String defaultText = "Task Percent"; // Default center text
+        // Set center text based on conditions
+        if (taskStatusList == null || taskStatusList.isEmpty()) {
+            data.setCenterText1(" ");
+            // Load font from resources
+            Typeface tf = ResourcesCompat.getFont(ProjectDetailsActivity.this, R.font.brownbold);
             data.setCenterText1Typeface(tf);
 
             // Get font size from dimens.xml and convert it to sp(library uses sp values).
-            data.setCenterText1FontSize(ChartUtils.px2sp(getResources().getDisplayMetrics().scaledDensity,
-                    15));
-        }
+            data.setCenterText1FontSize(ChartUtils.px2sp(getResources().getDisplayMetrics().scaledDensity, 50));
+        } else {
+            data.setCenterText1(defaultText);
+            // Load font from resources
+            Typeface tf = ResourcesCompat.getFont(ProjectDetailsActivity.this, R.font.brownbold);
+            data.setCenterText1Typeface(tf);
 
-        boolean hasCenterText2 = false;
-        if (hasCenterText2) {
-            data.setCenterText2("Charts (Roboto Italic)");
-
-            Typeface tf = Typeface.createFromAsset(ProjectDetailsActivity.this.getAssets(), "Roboto-Italic.ttf");
-
-            data.setCenterText2Typeface(tf);
-            data.setCenterText2FontSize(ChartUtils.px2sp(getResources().getDisplayMetrics().scaledDensity,
-                    20));
+            // Get font size from dimens.xml and convert it to sp(library uses sp values).
+            data.setCenterText1FontSize(ChartUtils.px2sp(getResources().getDisplayMetrics().scaledDensity, 50));
         }
 
         pieLineChartView.setPieChartData(data);

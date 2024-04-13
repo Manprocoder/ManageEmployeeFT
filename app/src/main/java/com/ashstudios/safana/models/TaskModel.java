@@ -1,11 +1,14 @@
 package com.ashstudios.safana.models;
 
 public class TaskModel {
+
     private String taskID;
     private String name;
     private String date;
+    private String status;
 
-    public TaskModel(String taskID, String name, String date) {
+    public TaskModel(String status, String taskID, String name, String date) {
+        this.status = status;
         this.taskID = taskID;
         this.name = name;
         this.date = date;
@@ -20,5 +23,8 @@ public class TaskModel {
 
     public String getDate() {
         return date;
+    }
+    public String getStatus(){
+        return status;
     }
 }

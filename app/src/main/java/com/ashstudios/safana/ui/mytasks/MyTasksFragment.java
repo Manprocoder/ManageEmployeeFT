@@ -5,11 +5,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -33,6 +36,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class MyTasksFragment extends Fragment {
@@ -45,6 +50,7 @@ public class MyTasksFragment extends Fragment {
     private ArrayList<TaskModel> arrayListMutableLiveData;
     ArrayList<TaskModel> tasks = new ArrayList<>();
     FirebaseFirestore db;
+    TextView tv;
     private Boolean isUndo = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -52,14 +58,8 @@ public class MyTasksFragment extends Fragment {
         homeViewModel = ViewModelProviders.of(this).get(MyTasksViewModel.class);
         View root = inflater.inflate(R.layout.fragment_mytasks, container, false);
 
+        tv = root.findViewById(R.id.no_tasks);
         arrayListMutableLiveData = new ArrayList<>();
-//        final TextView textView = root.findViewById(R.id.text_home);
-//        homeViewModel.getText().observe(this, new Observer<String>() {
-//            @Override
-//            public void onChanged(@Nullable String s) {
-//                textView.setText(s);
-//            }
-//        });
 
         constraintLayout = root.findViewById(R.id.constraint_layout);
         recyclerView = root.findViewById(R.id.rv_tasks);
@@ -95,6 +95,18 @@ public class MyTasksFragment extends Fragment {
         return root;
     }
 
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_settings).setVisible(false);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     private void enableSwipeToCompleteAndUndo() {
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(getActivity()) {
             @Override
@@ -128,31 +140,87 @@ public class MyTasksFragment extends Fragment {
         itemTouchhelper.attachToRecyclerView(recyclerView);
     }
 
-    public static void sort(Context mContext, Bundle b)
-    {
+    public void sort(Context mContext, Bundle b, boolean chip_date, boolean chip_complete, boolean chip_incomplete) {
         Toast.makeText( mContext, "sorting...", Toast.LENGTH_LONG).show();
-        homeViewModel.sort(b);
-        TaskAdapter leaveManagementRVAdapter = new TaskAdapter(mContext,homeViewModel.getArrayListMutableLiveData());
-        recyclerView.setAdapter(leaveManagementRVAdapter);
+        if(chip_date){
+            sort_date();
+        }
+
+        if(chip_complete){
+            Log.d(TAG, "run");
+            sort_completed();
+            Log.d(TAG, "run2");
+        }
+
+        if(chip_incomplete){
+            sort_incompleted();
+        }
+
+        taskAdapter.notifyDataSetChanged();
+
+    }
+
+    private void sort_date(){
+        Comparator<TaskModel> comparator = Comparator.comparing(TaskModel::getDate);
+        Collections.sort(tasks, comparator); // Sort the list using the comparator
+        taskAdapter.notifyDataSetChanged();
+    }
+
+
+    private void sort_completed(){
+        ArrayList<TaskModel> completedTasks = new ArrayList<>();
+        for (TaskModel task : tasks) {
+            Log.d(TAG, "run3");
+            String task_percent = task.getStatus();
+            int num = Integer.parseInt(task_percent);
+            if (num == 100) {
+                completedTasks.add(task);
+            }
+        }
+        tasks.clear();
+        tasks.addAll(completedTasks);
+        Log.d(TAG, "run5");
+        taskAdapter.notifyDataSetChanged();
+    }
+
+
+
+    private void sort_incompleted(){
+        ArrayList<TaskModel> incompletedTasks = new ArrayList<>();
+        for (TaskModel task : tasks) {
+            String task_percent = task.getStatus();
+            int num = Integer.parseInt(task_percent);
+            if (num < 100) {
+                incompletedTasks.add(task);
+            }
+        }
+        tasks.clear();
+        tasks.addAll(incompletedTasks);
+        taskAdapter.notifyDataSetChanged();
     }
 
     void getTaskDetails(List<String> taskIds) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         for (String taskId : taskIds) {
-            Log.d(TAG, taskId);
             db.collection("Tasks").document(taskId).get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document != null && document.exists()) {
                         String name = document.getString("Task Name");
                         String duDate = document.getString("Due Date");
+                        String status = document.getString("Status(%)");
+                        if(status != null && !status.equals("100")){
+                            TaskModel taskModel = new TaskModel(status, taskId, name, duDate);
+                            arrayListMutableLiveData.add(taskModel);
+                            tasks.add(taskModel);
+                            tv.setText(" ");
+                            // Update your adapter here
+                            taskAdapter.notifyDataSetChanged();
+                        }else{
+                            tv.setText("NO ASSIGNMENTS");
+                        }
 
-                        TaskModel taskModel = new TaskModel(taskId, name, duDate);
-                        arrayListMutableLiveData.add(taskModel);
-                        tasks.add(taskModel);
-                        // Update your adapter here
-                        taskAdapter.notifyDataSetChanged();
                     }
                 } else {
 

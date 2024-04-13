@@ -15,7 +15,7 @@
         android:id="@+id/nav_project_details"
         android:name="com.ashstudios.safana.ui.project__details.ProjectDetailsFragment"
         android:label="@string/menu_project_details"
-        tools:layout="@layout/activity_project_details" />
+        tools:layout="@layout/fragment_projects" />
 
     <fragment
         android:id="@+id/nav_calendar"

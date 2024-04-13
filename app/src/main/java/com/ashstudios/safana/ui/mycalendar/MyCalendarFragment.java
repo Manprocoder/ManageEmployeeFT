@@ -1,4 +1,4 @@
-package com.ashstudios.safana.ui.calendar;
+package com.ashstudios.safana.ui.mycalendar;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -19,10 +19,17 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.ashstudios.safana.R;
+import com.ashstudios.safana.activities.ProjectDetailsActivity;
 import com.ashstudios.safana.adapters.SupervisorTaskAdapter;
 import com.ashstudios.safana.adapters.TaskAdapter;
 import com.ashstudios.safana.models.TaskModel;
+import com.ashstudios.safana.others.SharedPref;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -32,15 +39,18 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class CalendarFragment extends Fragment implements TaskCalendarAdapter.OnItemClickListener {
+public class MyCalendarFragment extends Fragment implements TaskCalendarAdapter.OnItemClickListener {
 
     private TextView monthYearText;
     private Button prev_button, next_button;
     RecyclerView calendarRecyclerView;
+    SharedPref sharedPref;
+    FirebaseFirestore db;
     CalendarViewModel calendarViewModel;
-    SupervisorTaskAdapter supervisorTaskAdapter;
+    TaskAdapter taskAdapter;
     TaskCalendarAdapter taskCalendarAdapter;
     private LocalDate selectedDate;
     LinearLayout linearLayout;
@@ -48,7 +58,7 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
     ArrayList<DayModel> daysInMonth;
     ArrayList<String> dateList;
     TextView tv_tasks;
-    private static  final String TAG = "CALENDAR_FRAGMENT";
+    private static  final String TAG = "MYCALENDAR_FRAGMENT";
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -79,10 +89,12 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
+
+
         //set the adapter
-        supervisorTaskAdapter = new SupervisorTaskAdapter(getActivity(), taskModels);
-        recyclerView.setAdapter(supervisorTaskAdapter);
-        supervisorTaskAdapter.notifyDataSetChanged();
+        taskAdapter = new TaskAdapter(getActivity(), taskModels);
+        recyclerView.setAdapter(taskAdapter);
+        taskAdapter.notifyDataSetChanged();
         return root;
     }
 
@@ -100,7 +112,7 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
         setHasOptionsMenu(true);
     }
 
-    private void setMonthView() {
+    /*private void setMonthView() {
         monthYearText.setText(monthYearFromDate(selectedDate));
 
         YearMonth yearMonth = YearMonth.from(selectedDate);
@@ -114,10 +126,8 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
         String month = String.valueOf(selectedDate.getMonthValue());
         String finalMonth = String.format("%02d", Integer.parseInt(month));
 
-
-
+        db = FirebaseFirestore.getInstance();
         // Initialize Firestore outside the completion listener
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("Tasks").get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Set<String> daySet = new HashSet<>(); // Initialize daySet here
@@ -158,7 +168,89 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
                 Log.d(TAG, "Fail to read due date!!!");
             }
         });
+    }*/
+
+    private void setMonthView() {
+        monthYearText.setText(monthYearFromDate(selectedDate));
+
+        YearMonth yearMonth = YearMonth.from(selectedDate);
+        int size = yearMonth.lengthOfMonth();
+
+        LocalDate firstOfMonth = selectedDate.withDayOfMonth(1);
+        DayOfWeek dayOfWeek = firstOfMonth.getDayOfWeek();
+        int startDayOfWeekValue = dayOfWeek.getValue();
+        String year = String.valueOf(selectedDate.getYear());
+
+        String month = String.valueOf(selectedDate.getMonthValue());
+        String finalMonth = String.format("%02d", Integer.parseInt(month));
+
+        sharedPref = new SharedPref(getActivity());
+        String empId = sharedPref.getEMP_ID();
+
+        db = FirebaseFirestore.getInstance();
+        db.collection("Employees").document(empId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot employeeDocument = task.getResult();
+                    if (employeeDocument.exists()) {
+                        List<String> taskIDs = (List<String>) employeeDocument.get("taskID");
+                        if (taskIDs != null) {
+                            fetchTasks(taskIDs, size, startDayOfWeekValue, finalMonth, year);
+                        } else {
+                            Log.e(TAG, "No taskIDs found for this employee");
+                        }
+                    } else {
+                        Log.e(TAG, "No such document for employee");
+                    }
+                } else {
+                    Log.e(TAG, "Error getting employee document: ", task.getException());
+                }
+            }
+        });
     }
+
+    private void fetchTasks(List<String> taskIDs, int size, int startDayOfWeekValue, String finalMonth, String year) {
+        db.collection("Tasks").whereIn(FieldPath.documentId(), taskIDs).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Set<String> daySet = new HashSet<>(); // Initialize daySet here
+                List<String> dateList = new ArrayList<>(); // Initialize dateList here
+
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    String dueDate = document.getString("Due Date");
+                    if (dueDate != null) {
+                        dateList.add(dueDate);
+                    }
+                }
+
+                ArrayList<DayModel> daysInMonth = new ArrayList<>(); // Initialize daysInMonth here
+
+                for (int i = 1; i <= 42; i++) {
+                    if (i <= startDayOfWeekValue || i > size + startDayOfWeekValue) {
+                        daysInMonth.add(new DayModel(" ", finalMonth, year, Color.WHITE));
+                    } else {
+                        String day = String.valueOf(i - startDayOfWeekValue);
+                        String date = day + "/" + finalMonth + "/" + year;    //bind elements of the date to compare
+                        if (dateList.contains(date)) {
+                            daysInMonth.add(new DayModel(day, finalMonth, year, Color.GREEN));
+                        } else {
+                            daysInMonth.add(new DayModel(day, finalMonth, year, Color.WHITE));
+                        }
+                    }
+                }
+
+                // Update UI on the main thread
+                getActivity().runOnUiThread(() -> {
+                    calendarRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 7));
+                    taskCalendarAdapter = new TaskCalendarAdapter(daysInMonth, this);
+                    calendarRecyclerView.setAdapter(taskCalendarAdapter);
+                });
+            } else {
+                Log.d(TAG, "Error getting tasks: ", task.getException());
+            }
+        });
+    }
+
 
 
     private String monthYearFromDate(LocalDate date) {
@@ -202,7 +294,7 @@ public class CalendarFragment extends Fragment implements TaskCalendarAdapter.On
                             TaskModel taskModel = new TaskModel(status, taskID, taskName, dueDate);
                             taskModels.add(taskModel);
                         }
-                        supervisorTaskAdapter.notifyDataSetChanged();
+                        taskAdapter.notifyDataSetChanged();
 
                         if (taskModels.isEmpty()) {
                             tv_tasks.setText("No events on " + chooseDate);

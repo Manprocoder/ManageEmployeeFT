@@ -33,7 +33,7 @@ public class MyTaskDetailsActivity extends AppCompatActivity {
     Spinner spinner;
     CheckBox check;
     TaskStatusCategoryAdapter taskStatusCategoryAdapter;
-    TextView project_name, assigned_to, due_date, task_desc;
+    TextView project_name, assigned_to, due_date, task_desc, task_status;
     String taskID;
 
     @Override
@@ -44,6 +44,7 @@ public class MyTaskDetailsActivity extends AppCompatActivity {
         assigned_to = findViewById(R.id.tv_task_assigned_to);
         due_date = findViewById(R.id.tv_task_date);
         task_desc = findViewById(R.id.tv_task_desc);
+        task_status = findViewById(R.id.tv_status);
         taskID = getIntent().getStringExtra("taskID");
 
         spinner = findViewById(R.id.spinner_category);
@@ -101,7 +102,7 @@ public class MyTaskDetailsActivity extends AppCompatActivity {
                                 String proj_name = document.getString("Project Name");
                                 String duDate = document.getString("Due Date");
                                 String taskDesc = document.getString("Task Description");
-
+                                String taskStatus = document.getString("Status(%)");
                                 String employeeID = document.getString("EMP ID");
 
                                 if (employeeID != null) {
@@ -118,6 +119,7 @@ public class MyTaskDetailsActivity extends AppCompatActivity {
                                                             assigned_to.setText(empName);
                                                             due_date.setText(duDate);
                                                             task_desc.setText(taskDesc);
+                                                            task_status.setText(taskStatus + "%");
                                                         }
                                                     }
                                                 }
@@ -158,10 +160,6 @@ public class MyTaskDetailsActivity extends AppCompatActivity {
                 percent = 100;
             }
 
-            TextView test = findViewById(R.id.display);
-            test.setText(String.valueOf(percent)); //debug
-
-            // save
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             DocumentReference taskRef = db.collection("Tasks").document(taskID);
 

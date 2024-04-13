@@ -23,9 +23,9 @@
 
     <fragment
         android:id="@+id/nav_calendar"
-        android:name="com.ashstudios.safana.ui.calendar.CalendarFragment"
+        android:name="com.ashstudios.safana.ui.mycalendar.MyCalendarFragment"
         tools:layout="@layout/fragment_calendar"
-        android:label="Calendar"/>
+        android:label="My Calendar"/>
 
     <fragment
         android:id="@+id/nav_search"
@@ -48,8 +48,8 @@
     <fragment
         android:id="@+id/nav_project_status"
         android:name="com.ashstudios.safana.ui.projectstatus.ProjectStatusFragment"
-        tools:layout="@layout/fragment_project_status"
-        android:label="Project Status"/>
+        tools:layout="@layout/fragment_myprojects"
+        android:label="My Projects"/>
 
     <fragment
         android:id="@+id/nav_worker_laws"
