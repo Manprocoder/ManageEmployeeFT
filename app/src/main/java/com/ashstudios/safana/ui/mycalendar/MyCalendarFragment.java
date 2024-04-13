@@ -50,7 +50,7 @@ public class MyCalendarFragment extends Fragment implements TaskCalendarAdapter.
     SharedPref sharedPref;
     FirebaseFirestore db;
     CalendarViewModel calendarViewModel;
-    TaskAdapter taskAdapter;
+    SupervisorTaskAdapter taskAdapter;
     TaskCalendarAdapter taskCalendarAdapter;
     private LocalDate selectedDate;
     LinearLayout linearLayout;
@@ -92,7 +92,7 @@ public class MyCalendarFragment extends Fragment implements TaskCalendarAdapter.
 
 
         //set the adapter
-        taskAdapter = new TaskAdapter(getActivity(), taskModels);
+        taskAdapter = new SupervisorTaskAdapter(getActivity(), taskModels);
         recyclerView.setAdapter(taskAdapter);
         taskAdapter.notifyDataSetChanged();
         return root;
@@ -112,63 +112,6 @@ public class MyCalendarFragment extends Fragment implements TaskCalendarAdapter.
         setHasOptionsMenu(true);
     }
 
-    /*private void setMonthView() {
-        monthYearText.setText(monthYearFromDate(selectedDate));
-
-        YearMonth yearMonth = YearMonth.from(selectedDate);
-        int size = yearMonth.lengthOfMonth();
-
-        LocalDate firstOfMonth = selectedDate.withDayOfMonth(1);
-        DayOfWeek dayOfWeek = firstOfMonth.getDayOfWeek();
-        int startDayOfWeekValue = dayOfWeek.getValue();
-        String year = String.valueOf(selectedDate.getYear());
-
-        String month = String.valueOf(selectedDate.getMonthValue());
-        String finalMonth = String.format("%02d", Integer.parseInt(month));
-
-        db = FirebaseFirestore.getInstance();
-        // Initialize Firestore outside the completion listener
-        db.collection("Tasks").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Set<String> daySet = new HashSet<>(); // Initialize daySet here
-                dateList = new ArrayList<>(); // Initialize dateList here
-
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    String dueDate = document.getString("Due Date");
-                    if (dueDate != null) {
-                        dateList.add(dueDate);
-                    }
-                }
-
-                daysInMonth = new ArrayList<>(); // Initialize daysInMonth here
-
-                for (int i = 1; i <= 42; i++) {
-                    if (i <= startDayOfWeekValue || i > size + startDayOfWeekValue) {
-                        daysInMonth.add(new DayModel(" ", finalMonth, year, Color.WHITE));
-                    } else {
-                        String day = String.valueOf(i - startDayOfWeekValue);
-                        String date = day + "/"+ finalMonth +"/" +year;    //bind elements of the date to compare
-                        //Log.d(TAG, date);
-                        if (dateList.contains(date)) {
-                            daysInMonth.add(new DayModel(day, finalMonth, year, Color.GREEN));
-
-                        } else {
-                            daysInMonth.add(new DayModel(day, finalMonth, year, Color.WHITE));
-                        }
-                    }
-                }
-
-                // Update UI on the main thread
-                getActivity().runOnUiThread(() -> {
-                    calendarRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 7));
-                    taskCalendarAdapter = new TaskCalendarAdapter(daysInMonth, this);
-                    calendarRecyclerView.setAdapter(taskCalendarAdapter);
-                });
-            } else { //task.isSuccessful()
-                Log.d(TAG, "Fail to read due date!!!");
-            }
-        });
-    }*/
 
     private void setMonthView() {
         monthYearText.setText(monthYearFromDate(selectedDate));
