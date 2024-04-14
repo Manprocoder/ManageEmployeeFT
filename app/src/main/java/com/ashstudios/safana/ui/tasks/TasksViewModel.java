@@ -14,6 +14,8 @@ import com.ashstudios.safana.ui.worker_details.WorkerDetailsViewModel;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -54,9 +56,18 @@ public class TasksViewModel extends ViewModel {
     }
 
     public void sort(Bundle b) {
-        Comparator<TaskModel> comparator = Comparator.comparing(TaskModel::getDate);
+        Comparator<TaskModel> comparator = Comparator.comparing((TaskModel task) -> {
+            String dateString = task.getDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("[d][dd]/MM/yyyy");
+            LocalDate date = LocalDate.parse(dateString, formatter);
+            return date;
+        });
         Collections.sort(taskModels, comparator); // Sort the list using the comparator
     }
+
+
+
+
 
     public void sort_completed(Bundle b) {
         ArrayList<TaskModel> completedTasks = new ArrayList<>();

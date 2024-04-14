@@ -6,10 +6,13 @@ import android.widget.Toast;
 import androidx.lifecycle.ViewModel;
 
 import com.ashstudios.safana.models.LeaveModel;
+import com.ashstudios.safana.models.TaskModel;
 import com.ashstudios.safana.ui.worker_details.WorkerDetailsViewModel;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,7 +56,12 @@ public class LeaveManagementViewModel extends ViewModel {
     }
 
     public void sort(Bundle b) {
-        Comparator<LeaveModel> comparator = Comparator.comparing(LeaveModel::getDate);
+        Comparator<LeaveModel> comparator = Comparator.comparing((LeaveModel task) -> {
+            String dateString = task.getDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("[d][dd]-MM-yyyy");
+            LocalDate date = LocalDate.parse(dateString, formatter);
+            return date;
+        });
         Collections.sort(leaveModels, comparator); // Sort the list using the comparator
     }
 

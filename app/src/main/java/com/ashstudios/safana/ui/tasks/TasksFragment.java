@@ -57,7 +57,6 @@ public class TasksFragment extends Fragment {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         //set the adapter
         supervisorTaskAdapter = new SupervisorTaskAdapter(getActivity(),tasksViewModel.getArrayListMutableLiveData());
-        //tasksViewModel.sort(new Bundle());
         recyclerView.setAdapter(supervisorTaskAdapter);
 
         tasksViewModel.setDataChangedListener(() -> {
